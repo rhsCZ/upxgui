@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
-// Used by upxgui.rc
+// Microsoft Visual C++ vygeneroval soubor zahrnutí.
+// Použito upxgui.rc
 //
 #define IDD_UPXGUI_DIALOG               101
 #define IDR_ICON                        128
@@ -18,6 +18,7 @@
 #define IDC_STATICTXT                   1012
 #define IDC_ADMIN                       1013
 #define IDC_LOG                         1014
+#define IDC_OUTEXT                      1015
 #define ID_MENU_OPEN                    32771
 #define ID_MENU_CLOSE                   32772
 #define ID_MENU_MINIMIZE                32773
@@ -28,7 +29,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        129
 #define _APS_NEXT_COMMAND_VALUE         32774
-#define _APS_NEXT_CONTROL_VALUE         1014
+#define _APS_NEXT_CONTROL_VALUE         1016
 #define _APS_NEXT_SYMED_VALUE           102
 #endif
 #endif

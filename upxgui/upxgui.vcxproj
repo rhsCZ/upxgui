@@ -122,10 +122,10 @@
       <AdditionalLibraryDirectories>$(ProjectDir)libssl\x32\Debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>ucrt.lib;msvcrt.lib</IgnoreSpecificDefaultLibraries>
-      <StackReserveSize>585960</StackReserveSize>
+      <StackReserveSize>65536</StackReserveSize>
       <StackCommitSize>
       </StackCommitSize>
-      <HeapReserveSize>104857600</HeapReserveSize>
+      <HeapReserveSize>65536</HeapReserveSize>
       <HeapCommitSize>
       </HeapCommitSize>
     </Link>
@@ -158,10 +158,10 @@
       <AdditionalLibraryDirectories>$(ProjectDir)libssl\x64\Debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
-      <StackReserveSize>585960</StackReserveSize>
+      <StackReserveSize>65536</StackReserveSize>
       <StackCommitSize>
       </StackCommitSize>
-      <HeapReserveSize>104857600</HeapReserveSize>
+      <HeapReserveSize>65536</HeapReserveSize>
       <HeapCommitSize>
       </HeapCommitSize>
     </Link>
@@ -198,10 +198,10 @@
       <AdditionalLibraryDirectories>$(ProjectDir)libssl\x32\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
-      <StackReserveSize>585960</StackReserveSize>
+      <StackReserveSize>65536</StackReserveSize>
       <StackCommitSize>
       </StackCommitSize>
-      <HeapReserveSize>104857600</HeapReserveSize>
+      <HeapReserveSize>65536</HeapReserveSize>
       <HeapCommitSize>
       </HeapCommitSize>
     </Link>
@@ -238,10 +238,10 @@
       <AdditionalLibraryDirectories>$(ProjectDir)libssl\x64\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
-      <StackReserveSize>585960</StackReserveSize>
+      <StackReserveSize>65536</StackReserveSize>
       <StackCommitSize>
       </StackCommitSize>
-      <HeapReserveSize>104857600</HeapReserveSize>
+      <HeapReserveSize>65536</HeapReserveSize>
       <HeapCommitSize>
       </HeapCommitSize>
     </Link>

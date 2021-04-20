@@ -1,12 +1,13 @@
-
+#pragma once
 // hasher2Dlg.h : header file
 //
 #include "afxdialogex.h"
 #include "afxwin.h"
 #include <thread>
 #include <fstream>
+#include <regex>
 using namespace std;
-#pragma once
+#pragma warning(disable:6262)
 #define bufferSize 10
 #define WM_SHOWPAGE WM_APP+2
 #define WM_TRAY_ICON_NOTIFY_MESSAGE (WM_USER + 1)
@@ -85,27 +86,32 @@ public:
 	afx_msg void OnBnClickedEnter();
 	//void executeprogram(char* cmdline, DWORD flags, STARTUPINFOA si, PROCESS_INFORMATION pi,bool needadmin = false);
 	//bool ExtractResource(uint16_t ResourceID, char* OutputFileName, char* path, const char* ResType);
-	void updatevars(bool type, char *filename);
+	void updatevars(bool setmulti, bool multi, bool enfile=false, bool type=false, char* filename=nullptr, size_t* lens=nullptr, int filecount=0);
 private:
-	static CFont Font;
-	static bool trayenable;
-	static bool minimizeen;
-	static CButton* checkbox;
-	static CButton* trayen;
-	static CButton* comp;
-	static CButton* decomp;
-	static CButton* log;
-	static CButton* admin;
-	static CButton* suspicious;
-	static CButton* backup;
-	static CStatic* statictxt;
-	static CComboBox* complvl;
-	static int boxcheck;
-	static filectrl outbrowse;
-	static fileinctrl inbrowse;
-	static char infile[500];
-	static char outfile[500];
-	static unsigned long type;
+	CFont Font = {};
+	bool trayenable = false;
+	bool minimizeen = false;
+	CButton* checkbox;
+	CButton* trayen;
+	CButton* comp;
+	CButton* decomp;
+	CButton* log;
+	CButton* admin;
+	CButton* suspicious;
+	CButton* backup;
+	CStatic* statictxt;
+	CComboBox* complvl;
+	CStatic* outtext;
+	int boxcheck = 0;
+	filectrl outbrowse;
+	fileinctrl inbrowse;
+	char infile[MAX_PATH * 210] = {"\0"};
+	char* filesptr[210] = {nullptr};
+	size_t lensf[210] = {0};
+	int filecounts=0;
+	char outfile[500] = { "\0" };
+	unsigned long type = 0;
+	bool multiplefile = false;
 	SECURITY_ATTRIBUTES saAttr;
 	HANDLE in_rd = NULL;
 	HANDLE in_wr = NULL;

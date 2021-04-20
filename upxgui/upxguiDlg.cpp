@@ -10,58 +10,68 @@
 #include "afxwin.h"
 #include <fstream>
 #include <Windows.h>
-CFont UpxguiDlg::Font = {};
-bool UpxguiDlg::trayenable = {};
-bool UpxguiDlg::minimizeen = {};
-CButton* UpxguiDlg::checkbox = {};
-CButton* UpxguiDlg::trayen = {};
-CButton* UpxguiDlg::comp = {};
-CButton* UpxguiDlg::log = {};
-CButton* UpxguiDlg::decomp = {};
-CButton* UpxguiDlg::admin = {};
-CButton* UpxguiDlg::suspicious = {};
-CButton* UpxguiDlg::backup = {};
-CStatic* UpxguiDlg::statictxt = {};
-CComboBox* UpxguiDlg::complvl = {};
-int UpxguiDlg::boxcheck = {};
-filectrl UpxguiDlg::outbrowse = {};
-fileinctrl UpxguiDlg::inbrowse = {};
-char UpxguiDlg::infile[500] = {'\0'};
-char UpxguiDlg::outfile[500] = {'\0'};
-unsigned long UpxguiDlg::type = {};
+UpxguiDlg* dialog = nullptr;
 CWnd *wnd;
+HWND hwnd;
 template<class TYPE>
 bool RegSetKey(HKEY key, LPSTR keyloc, unsigned long type, REGSAM access, LPSTR name, TYPE indatax);
 int RegCrtKey(HKEY key, LPSTR keyloc, REGSAM access);
 template<class TYPE>
 int RegGetKey(HKEY key, LPSTR keyloc, unsigned long type, REGSAM access, LPSTR name, TYPE outdatax);
-#pragma warning( disable:4244)
+#pragma warning(disable:4244)
 #pragma warning(disable:6387)
 #pragma warning(disable:6011)
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 using namespace std;
-void UpxguiDlg::updatevars(bool type, char *filename)
+void UpxguiDlg::updatevars(bool setmulti, bool multi,bool enfile,bool type, char *filename,size_t *lens,int filecount)
 {
-	if (type == 1)
+	if (setmulti)
 	{
-		//ZeroMemory(infile, sizeof(infile));
-		//memcpy_s(infile, sizeof(infile), "\0", 2);
-		strcpy(infile, filename);
-		//strcpy(indfile, filename);
+		multiplefile = multi;
+		if (multi)
+		{
+			outbrowse.ShowWindow(SW_HIDE);
+			outtext->ShowWindow(SW_HIDE);
+		}
+		else
+		{
+			outbrowse.ShowWindow(SW_SHOW);
+			outtext->ShowWindow(SW_SHOW);
+		}
 	}
-	else
+	if (enfile)
 	{
-		//ZeroMemory(outfile, sizeof(outfile));
-		//memcpy_s(outfile, sizeof(outfile), "\0", 2);
-		strcpy(outfile, filename);
-		//strcpy(outdfile, filename);
+		if (type == 1)
+		{
+			char *ptr = infile;
+			//ZeroMemory(infile, sizeof(infile));
+			//memcpy_s(infile, sizeof(infile), "\0", 2);
+			memcpy(infile, filename,MAX_PATH*210);
+			filecounts = filecount;
+			if (lens != nullptr)
+			{
+				memcpy_s(lensf, sizeof(size_t*) * 210, lens, sizeof(size_t*) * 210);
+				for (int d = 0; d < filecounts; d++)
+				{
+					filesptr[d] = ptr;
+					ptr = ptr + lensf[d]+1;
+				}
+			}
+			//strcpy(indfile, filename);
+		}
+		else
+		{
+			//ZeroMemory(outfile, sizeof(outfile));
+			//memcpy_s(outfile, sizeof(outfile), "\0", 2);
+			strcpy(outfile, filename);
+			//strcpy(outdfile, filename);
+		}
 	}
 }
 void filectrl::OnBrowse()
 {
-	UpxguiDlg dlg;
 	CFileDialog filedialog(FALSE, ".exe", NULL, OFN_NOTESTFILECREATE | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST, CString("Application (*.exe)|*.exe|"), wnd, NULL, true);
 	INT_PTR res = filedialog.DoModal();
 	if (res == IDOK)
@@ -73,34 +83,103 @@ void filectrl::OnBrowse()
 		strcat(buffer, "\\");
 		strcat(buffer, file.m_psz);
 		SetWindowText(buffer);
-		dlg.updatevars(0, buffer);
+		dialog->updatevars(false, false, true, false, buffer, nullptr, 0);
 	}
-	else if (res == IDCANCEL || res == IDABORT)
+	else
 	{
-		dlg.updatevars(0, "\0");
-		SetWindowText("");
+		char buffer[MAX_PATH * 210] = {"\0"};
+		size_t lens[210] = { 0 };
+		dialog->updatevars(true, false, true, false, buffer, lens, 0);
 	}
 }
 void fileinctrl::OnBrowse()
 {
-	UpxguiDlg dlg;
-	CFileDialog filedialog(TRUE, ".exe", NULL, OFN_HIDEREADONLY | OFN_PATHMUSTEXIST, CString("Application (*.exe)|*.exe|"), wnd, NULL, true);
+	size_t lens[210] = {0};
+	CString buffer;
+	char* b = buffer.GetBuffer(MAX_PATH*210);
+	//".exe", NULL, OFN_HIDEREADONLY | OFN_ALLOWMULTISELECT | OFN_PATHMUSTEXIST, CString("Application (*.exe)|*.exe|"), wnd, NULL, true
+	CFileDialog filedialog(TRUE);
+	OPENFILENAME& ofn=filedialog.GetOFN();
+	ofn.Flags |= OFN_HIDEREADONLY | OFN_ALLOWMULTISELECT | OFN_PATHMUSTEXIST;
+	ofn.lpstrDefExt = ".exe";
+	ofn.lpstrFilter = "Application (*.exe)|*.exe)";
+	ofn.hwndOwner = hwnd;
+	ofn.nMaxFile = MAX_PATH*20;
+	ofn.lpstrFile = b;
 	INT_PTR res = filedialog.DoModal();
+	buffer.ReleaseBuffer();
 	if (res == IDOK)
 	{
-		char buffer[700] = {};
-		CT2A file(filedialog.GetFileName());
-		CT2A path(filedialog.GetFolderPath());
-		strcpy(buffer, path.m_psz);
-		strcat(buffer, "\\");
-		strcat(buffer, file.m_psz);
+		UINT i = 0;
+		size_t leng = 0;
+		char smalbuf[MAX_PATH] = { "\0" };
+		char buffer[MAX_PATH*210] = {"\0"};
+		int filecount=0;
+		char* filenamesptr[210] = { nullptr };
+		size_t len = { 0 };
+		char* folderpath = b;
+		char* bufstart = b;
+		len = strlen(bufstart);
+		char* filestart = bufstart + len+1;
+		cmatch match;
+		//(^[a-zA-Z0-9:\\]+$)+(?!^[a-zA-Z0-9:\\]+$^\\.exe$)+
+		regex reg("(\\.exe$)+");
+		if (regex_search(bufstart, match, reg))
+		{
+			filecount = 1;
+			sprintf_s(buffer, "%s", bufstart);
+			lens[0] = strlen(buffer);
+			goto skip;
+		}
+		
+		while(i<20)
+		{
+			len = strlen(filestart);
+			if(len != 0)
+			{ 
+			filenamesptr[i] = filestart;
+			filecount++;
+			filestart = filestart + len+1;
+			i++;
+			}
+			else
+			{
+				break;
+			}
+		}
+		//size_t lengs = 0;
+		for (int o = 0; o < filecount; o++)
+		{
+			
+			sprintf_s(smalbuf, "%s\\%s", folderpath, filenamesptr[o]);
+			lens[o] = strlen(smalbuf);
+			memcpy(buffer + leng, smalbuf, MAX_PATH * 20);
+			leng = leng+lens[o]+1;
+			//lengs = lengs + strlen(buffer+lengs);
+			buffer[leng] = *"\0";
+		}
+		skip:
+		//CT2A file(filedialog.GetFileName());
+		//CT2A path(filedialog.GetFolderPath());
+		//strcpy(buffer, path.m_psz);
+		//strcat(buffer, "\\");
+		//strcat(buffer, file.m_psz);
 		SetWindowText(buffer);
-		dlg.updatevars(1, buffer);
+		if (filecount == 1)
+		{
+			dialog->updatevars(true, false);
+		}
+		else if (filecount > 1)
+		{
+			dialog->updatevars(true, true);
+		}
+		dialog->updatevars(false,false,true,true,buffer,lens,filecount);
 	}
-	else if (res == IDCANCEL || res == IDABORT)
+	else
 	{
-		dlg.updatevars(1, "\0");
-		SetWindowText("");
+		char buffer[MAX_PATH * 210] = { "\0" };
+		size_t lens[210] = { 0 };
+		dialog->updatevars(true, false, true, true, buffer, lens, 0);
 	}
 }
 UpxguiDlg::UpxguiDlg(CWnd* pParent /*=nullptr*/)
@@ -117,6 +196,7 @@ UpxguiDlg::UpxguiDlg(CWnd* pParent /*=nullptr*/)
 	m_nDefaultMenuItem = 0;
 	m_bMinimizeToTray = TRUE;
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_ICON);
+	dialog = this;
 }
 
 void UpxguiDlg::DoDataExchange(CDataExchange* pDX)
@@ -332,6 +412,7 @@ BOOL UpxguiDlg::OnInitDialog()
 	if (UpxguiDlg::IsWindowVisible() != 0)
 	{
 		wnd = FromHandle(this->m_hWnd);
+		hwnd = this->m_hWnd;
 		comp = (CButton*)GetDlgItem(IDC_COMP);
 		admin = (CButton*)GetDlgItem(IDC_ADMIN);
 		decomp = (CButton*)GetDlgItem(IDC_DECOMP);
@@ -342,9 +423,10 @@ BOOL UpxguiDlg::OnInitDialog()
 		checkbox = (CButton*)GetDlgItem(IDC_MINTRAY);
 		trayen = (CButton*)GetDlgItem(IDC_TRAYEN);
 		complvl = (CComboBox*)GetDlgItem(IDC_COMPLVL);
+		outtext = (CStatic*)GetDlgItem(IDC_OUTEXT);
 		comp->SetCheck(1);
 		decomp->SetCheck(0);
-		complvl->SetCurSel(0);
+		complvl->SetCurSel(8);
 		if (minimizeen)
 		{
 			CheckDlgButton(IDC_MINTRAY, BST_CHECKED);
@@ -757,7 +839,9 @@ void UpxguiDlg::OnBnClickedEnter()
 {
 	UINT MASK;
 	bool mask;
-	char path[MAX_PATH] = { '\0' }, drive[3] = { '\0' }, dir[MAX_PATH] = { '\0' }, msg[250] = { '\0' }, buff[MAX_PATH * 2] = { '\0' }, cmdline[300] = { '\0' }, tmp[MAX_PATH] = { '\0' };
+	//char filename[90];
+	//char extension[20];
+	char path[MAX_PATH] = { '\0' }, drive[3] = { '\0' }, dir[MAX_PATH] = { '\0' }, msg[250] = { '\0' }, buff[MAX_PATH * 2] = { '\0' }, cmdline[MAX_PATH*30] = { '\0' }, tmp[MAX_PATH] = { '\0' };
 	SHELLEXECUTEINFOA ShExecInfo = { 0 };
 	ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFOA);
 	ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
@@ -792,7 +876,7 @@ void UpxguiDlg::OnBnClickedEnter()
 	{
 		strcat_s(cmdline, sizeof(cmdline), "-k ");
 	}
-	if (strcmp(outfile, "\0"))
+	if (strcmp(outfile, "\0") && multiplefile==false)
 	{
 		char buf[MAX_PATH + 6] = { '\0' };
 		sprintf_s(buf, "-o \"%s\"", outfile);
@@ -812,18 +896,23 @@ void UpxguiDlg::OnBnClickedEnter()
 		strcat_s(cmdline, sizeof(cmdline), "-d ");
 	}
 	ZeroMemory(buff, sizeof(buff));
-	sprintf_s(buff, "\"%s\"", infile);
-	strcat_s(cmdline, sizeof(cmdline), buff);
+	for (int i = 0; i < filecounts; i++)
+	{
+		sprintf_s(buff, "\"%s\" ", filesptr[i]);
+		strcat_s(cmdline, sizeof(cmdline), buff);
+	}
 	GetEnvironmentVariable("TEMP", tmp, sizeof(tmp));
 	//ZeroMemory(buff, sizeof(buff));
 	//sprintf_s(buff, " >>%s\\upxgui.log", tmp);
 	//strcat_s(cmdline, sizeof(cmdline), buff);
-	sprintf_s(msg, "command line is:\n%s", cmdline);
-	MessageBox(msg, "Debug info", MB_OK | MB_ICONINFORMATION | MB_TASKMODAL);
+	//sprintf_s(msg, "command line is:\n%s", cmdline);
+	//MessageBox(msg, "Debug info", MB_OK | MB_ICONINFORMATION | MB_TASKMODAL);
 	ShellExecuteExA(&ShExecInfo);
 	WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
 	DWORD x = -1;
 	GetExitCodeProcess(ShExecInfo.hProcess, &x);
+	CloseHandle(ShExecInfo.hProcess);
+	//CloseHandle(ShExecInfo.hInstApp);
 	ZeroMemory(msg, sizeof(msg));
 	if (comp->GetCheck() == BST_CHECKED)
 	{
@@ -861,7 +950,7 @@ void UpxguiDlg::OnBnClickedEnter()
 		{
 		case 0:
 		{
-			mask = false;
+			mask = true;
 			sprintf_s(msg, "File has been succesfully decompressed.");
 			break;
 		}
