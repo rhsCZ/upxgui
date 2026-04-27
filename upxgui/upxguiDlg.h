@@ -3,9 +3,11 @@
 //
 #include "afxdialogex.h"
 #include "afxwin.h"
+#include <string>
 #include <thread>
 #include <fstream>
 #include <regex>
+#include <vector>
 using namespace std;
 #pragma warning(disable:6262)
 #define bufferSize 10
@@ -83,7 +85,10 @@ public:
 	afx_msg void OnBnClickedTrayEn();
 	afx_msg void OnBnClickedComp();
 	afx_msg void OnBnClickedDecomp();
+	afx_msg void OnBnClickedAdmin();
 	afx_msg void OnBnClickedEnter();
+	std::vector<std::string> BuildUpxArguments();
+	int RunUpxOperation(const std::vector<std::string>& arguments);
 	//void executeprogram(char* cmdline, DWORD flags, STARTUPINFOA si, PROCESS_INFORMATION pi,bool needadmin = false);
 	//bool ExtractResource(uint16_t ResourceID, char* OutputFileName, char* path, const char* ResType);
 	void updatevars(bool setmulti, bool multi, bool enfile=false, bool type=false, char* filename=nullptr, size_t* lens=nullptr, int filecount=0);

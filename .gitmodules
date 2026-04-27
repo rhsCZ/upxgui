@@ -1,3 +1,4 @@
 [submodule "upx"]
 	path = upx
 	url = https://github.com/upx/upx
+	branch = master

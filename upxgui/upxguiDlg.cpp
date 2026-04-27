@@ -6,9 +6,12 @@
 #include "framework.h"
 #include "upxgui.h"
 #include "upxguiDlg.h"
+#include "upx_inproc.h"
 #include "afxdialogex.h"
 #include "afxwin.h"
 #include <fstream>
+#include <string>
+#include <vector>
 #include <Windows.h>
 UpxguiDlg* dialog = nullptr;
 CWnd *wnd;
@@ -25,6 +28,25 @@ int RegGetKey(HKEY key, LPSTR keyloc, unsigned long type, REGSAM access, LPSTR n
 #define new DEBUG_NEW
 #endif
 using namespace std;
+
+namespace {
+
+bool IsRunningAsAdmin()
+{
+	BOOL is_admin = FALSE;
+	PSID administrators_group = nullptr;
+	SID_IDENTIFIER_AUTHORITY nt_authority = SECURITY_NT_AUTHORITY;
+	if (AllocateAndInitializeSid(&nt_authority, 2, SECURITY_BUILTIN_DOMAIN_RID,
+		DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &administrators_group))
+	{
+		CheckTokenMembership(nullptr, administrators_group, &is_admin);
+		FreeSid(administrators_group);
+	}
+	return is_admin == TRUE;
+}
+
+}
+
 void UpxguiDlg::updatevars(bool setmulti, bool multi,bool enfile,bool type, char *filename,size_t *lens,int filecount)
 {
 	if (setmulti)
@@ -317,6 +339,7 @@ BEGIN_MESSAGE_MAP(UpxguiDlg, CDialog)
 	ON_COMMAND(ID_MENU_MINIMIZE, &UpxguiDlg::OnMinimize)
 	ON_BN_CLICKED(IDC_COMP, &UpxguiDlg::OnBnClickedComp)
 	ON_BN_CLICKED(IDC_DECOMP, &UpxguiDlg::OnBnClickedDecomp)
+	ON_BN_CLICKED(IDC_ADMIN, &UpxguiDlg::OnBnClickedAdmin)
 	ON_BN_CLICKED(IDC_ENTER, &UpxguiDlg::OnBnClickedEnter)
 END_MESSAGE_MAP()
 
@@ -427,6 +450,11 @@ BOOL UpxguiDlg::OnInitDialog()
 		comp->SetCheck(1);
 		decomp->SetCheck(0);
 		complvl->SetCurSel(8);
+		if (IsRunningAsAdmin())
+		{
+			admin->SetWindowTextA("Running as admin");
+			admin->EnableWindow(FALSE);
+		}
 		if (minimizeen)
 		{
 			CheckDlgButton(IDC_MINTRAY, BST_CHECKED);
@@ -834,85 +862,84 @@ void UpxguiDlg::OnBnClickedDecomp()
 	complvl->EnableWindow(0);
 }
 
+vector<string> UpxguiDlg::BuildUpxArguments()
+{
+	vector<string> arguments;
+	arguments.emplace_back("upx");
+	if (suspicious->GetCheck() == BST_CHECKED && decomp->GetCheck() == BST_UNCHECKED)
+	{
+		arguments.emplace_back("-f");
+	}
+	if (backup->GetCheck() == BST_CHECKED)
+	{
+		arguments.emplace_back("-k");
+	}
+	if (outfile[0] != '\0' && multiplefile == false)
+	{
+		arguments.emplace_back("-o");
+		arguments.emplace_back(outfile);
+	}
+	if (decomp->GetCheck() == BST_UNCHECKED)
+	{
+		char level[5] = { '\0' };
+		GetDlgItemTextA(IDC_COMPLVL, level, sizeof(level));
+		arguments.emplace_back(string("-") + level);
+	}
+	else
+	{
+		arguments.emplace_back("-d");
+	}
+	for (int i = 0; i < filecounts; ++i)
+	{
+		arguments.emplace_back(filesptr[i]);
+	}
+	return arguments;
+}
+
+int UpxguiDlg::RunUpxOperation(const vector<string>& arguments)
+{
+	return upxgui::RunEmbeddedUpx(arguments);
+}
+
+void UpxguiDlg::OnBnClickedAdmin()
+{
+	if (IsRunningAsAdmin())
+	{
+		return;
+	}
+
+	char module_path[MAX_PATH] = { '\0' };
+	GetModuleFileNameA(NULL, module_path, sizeof(module_path));
+
+	SHELLEXECUTEINFOA execute_info = { 0 };
+	execute_info.cbSize = sizeof(SHELLEXECUTEINFOA);
+	execute_info.fMask = SEE_MASK_NOCLOSEPROCESS;
+	execute_info.hwnd = this->m_hWnd;
+	execute_info.lpVerb = "runas";
+	execute_info.lpFile = module_path;
+	execute_info.nShow = SW_SHOWNORMAL;
+
+	if (!ShellExecuteExA(&execute_info))
+	{
+		MessageBox("Unable to restart application as administrator.", "Restart as admin", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+		return;
+	}
+
+	if (execute_info.hProcess != nullptr)
+	{
+		CloseHandle(execute_info.hProcess);
+	}
+	EndDialog(IDCANCEL);
+}
+
 
 void UpxguiDlg::OnBnClickedEnter()
 {
 	UINT MASK;
 	bool mask;
-	//char filename[90];
-	//char extension[20];
-	char path[MAX_PATH] = { '\0' }, drive[3] = { '\0' }, dir[MAX_PATH] = { '\0' }, msg[250] = { '\0' }, buff[MAX_PATH * 2] = { '\0' }, cmdline[MAX_PATH*30] = { '\0' }, tmp[MAX_PATH] = { '\0' };
-	SHELLEXECUTEINFOA ShExecInfo = { 0 };
-	ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFOA);
-	ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-	ShExecInfo.hwnd = this->m_hWnd;
-	ShExecInfo.lpVerb = NULL;
-	ShExecInfo.lpFile = path;
-	ShExecInfo.lpParameters = cmdline;
-	ShExecInfo.lpDirectory = NULL;
-	ShExecInfo.nShow = SW_HIDE;
-	ShExecInfo.hInstApp = NULL;
-	GetModuleFileName(NULL, path, sizeof(path));
-	_splitpath(path, drive, dir, new char[0], new char[0]);
-	ZeroMemory(path, sizeof(path));
-	strcpy(path, drive);
-	strcat(path, dir);
-	strcat(path, "\\upx.exe");
-	
-	if (!PathFileExistsA(path))
-	{
-		MessageBox("ERROR: UPX.exe is not installed in a same location as this program. please install it before use.","ERROR upx.exe",MB_OK | MB_ICONERROR | MB_TASKMODAL);
-		goto end;
-	}
-	if (admin->GetCheck() == BST_CHECKED)
-	{
-		ShExecInfo.lpVerb = "runas";
-	}
-	if (suspicious->GetCheck() == BST_CHECKED && decomp->GetCheck() == BST_UNCHECKED)
-	{
-		strcat_s(cmdline, sizeof(cmdline), "-f ");
-	}
-	if (backup->GetCheck() == BST_CHECKED)
-	{
-		strcat_s(cmdline, sizeof(cmdline), "-k ");
-	}
-	if (strcmp(outfile, "\0") && multiplefile==false)
-	{
-		char buf[MAX_PATH + 6] = { '\0' };
-		sprintf_s(buf, "-o \"%s\"", outfile);
-		strcat_s(cmdline, sizeof(cmdline), buf);
-		strcat_s(cmdline, sizeof(cmdline), " ");
-	}
-	if (decomp->GetCheck() == BST_UNCHECKED)
-	{
-		char str[5];
-		GetDlgItemTextA(IDC_COMPLVL, str, sizeof(str));
-		sprintf_s(buff, "-%s", str);
-		strcat_s(cmdline, sizeof(cmdline), buff);
-		strcat_s(cmdline, sizeof(cmdline), " ");
-	}
-	else if (decomp->GetCheck() == BST_CHECKED)
-	{
-		strcat_s(cmdline, sizeof(cmdline), "-d ");
-	}
-	ZeroMemory(buff, sizeof(buff));
-	for (int i = 0; i < filecounts; i++)
-	{
-		sprintf_s(buff, "\"%s\" ", filesptr[i]);
-		strcat_s(cmdline, sizeof(cmdline), buff);
-	}
-	GetEnvironmentVariable("TEMP", tmp, sizeof(tmp));
-	//ZeroMemory(buff, sizeof(buff));
-	//sprintf_s(buff, " >>%s\\upxgui.log", tmp);
-	//strcat_s(cmdline, sizeof(cmdline), buff);
-	//sprintf_s(msg, "command line is:\n%s", cmdline);
-	//MessageBox(msg, "Debug info", MB_OK | MB_ICONINFORMATION | MB_TASKMODAL);
-	ShellExecuteExA(&ShExecInfo);
-	WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
-	DWORD x = -1;
-	GetExitCodeProcess(ShExecInfo.hProcess, &x);
-	CloseHandle(ShExecInfo.hProcess);
-	//CloseHandle(ShExecInfo.hInstApp);
+	char msg[250] = { '\0' };
+	const vector<string> arguments = BuildUpxArguments();
+	const int x = RunUpxOperation(arguments);
 	ZeroMemory(msg, sizeof(msg));
 	if (comp->GetCheck() == BST_CHECKED)
 	{
@@ -984,8 +1011,6 @@ void UpxguiDlg::OnBnClickedEnter()
 	}
 
 		MessageBox(msg, "File compression result", MB_OK | MASK | MB_TASKMODAL);
-	end:
-		{}
 		/*if (log->GetCheck() == BST_CHECKED)
 		{
 			char buffer[MAX_PATH];
