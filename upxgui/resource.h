@@ -19,6 +19,8 @@
 #define IDC_ADMIN                       1013
 #define IDC_LOG                         1014
 #define IDC_OUTEXT                      1015
+#define IDC_BACKUP2                     1016
+#define IDC_ENOUT                       1016
 #define ID_MENU_OPEN                    32771
 #define ID_MENU_CLOSE                   32772
 #define ID_MENU_MINIMIZE                32773

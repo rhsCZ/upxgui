@@ -13,6 +13,7 @@ using namespace std;
 #define bufferSize 10
 #define WM_SHOWPAGE WM_APP+2
 #define WM_TRAY_ICON_NOTIFY_MESSAGE (WM_USER + 1)
+#define WM_UPX_OPERATION_FINISHED (WM_APP + 3)
 // Chasher2Dlg dialog
 class filectrl : public CMFCEditBrowseCtrl
 {
@@ -87,8 +88,13 @@ public:
 	afx_msg void OnBnClickedDecomp();
 	afx_msg void OnBnClickedAdmin();
 	afx_msg void OnBnClickedEnter();
+	afx_msg void OnBnClickedEnout();
+	afx_msg LRESULT OnUpxOperationFinished(WPARAM wParam, LPARAM lParam);
 	std::vector<std::string> BuildUpxArguments();
 	int RunUpxOperation(const std::vector<std::string>& arguments);
+	void SetUpxControlsEnabled(BOOL enabled);
+	void RefreshOutputFileControls(BOOL enabled);
+	void ShowUpxResult(int exitCode, bool compressMode);
 	//void executeprogram(char* cmdline, DWORD flags, STARTUPINFOA si, PROCESS_INFORMATION pi,bool needadmin = false);
 	//bool ExtractResource(uint16_t ResourceID, char* OutputFileName, char* path, const char* ResType);
 	void updatevars(bool setmulti, bool multi, bool enfile=false, bool type=false, char* filename=nullptr, size_t* lens=nullptr, int filecount=0);
@@ -96,6 +102,7 @@ private:
 	CFont Font = {};
 	bool trayenable = false;
 	bool minimizeen = false;
+	bool upxrunning = false;
 	CButton* checkbox;
 	CButton* trayen;
 	CButton* comp;
@@ -104,6 +111,7 @@ private:
 	CButton* admin;
 	CButton* suspicious;
 	CButton* backup;
+	CButton* enout = nullptr;
 	CStatic* statictxt;
 	CComboBox* complvl;
 	CStatic* outtext;

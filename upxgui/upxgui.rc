@@ -17,10 +17,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// ƒåe≈°tina (ƒåesk√° republika) resources
+// »eötina (»esk· republika) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CSY)
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
+#pragma code_page(1250)
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -86,15 +87,16 @@ BEGIN
     END
 END
 
-#endif    // ƒåe≈°tina (ƒåesk√° republika) resources
+#endif    // »eötina (»esk· republika) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
 /////////////////////////////////////////////////////////////////////////////
-// Angliƒçtina (Spojen√© st√°ty) resources
+// AngliËtina (SpojenÈ st·ty) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -107,7 +109,7 @@ EXSTYLE WS_EX_DLGMODALFRAME
 CAPTION "UPX GUI"
 FONT 8, "Arial", 400, 0, 0xEE
 BEGIN
-    CONTROL         "",IDC_FILEIN,"MfcEditBrowse",WS_BORDER | WS_TABSTOP | 0x880,51,17,199,16,WS_EX_ACCEPTFILES
+    CONTROL         "",IDC_FILEIN,"MfcEditBrowse",WS_BORDER | WS_TABSTOP | 0x80,51,17,199,16,WS_EX_ACCEPTFILES
     DEFPUSHBUTTON   "(De)Compress",IDC_ENTER,106,173,67,14
     PUSHBUTTON      "Exit",ID_EXIT,202,192,50,14
     CTEXT           "Input File:",IDC_STATIC,4,21,47,10
@@ -119,11 +121,12 @@ BEGIN
     LTEXT           "Compression level:",IDC_STATICTXT,67,59,62,8
     CONTROL         "Force to compress suspicious files(-f):",IDC_SUSPICIOUS,
                     "Button",BS_AUTOCHECKBOX | BS_LEFTTEXT | WS_TABSTOP,7,75,139,10
-    CONTROL         "Keep backup files(-k):",IDC_BACKUP,"Button",BS_AUTOCHECKBOX | BS_LEFTTEXT | WS_TABSTOP,61,90,87,10
-    CONTROL         "",IDC_FILEOUT,"MfcEditBrowse",WS_BORDER | WS_TABSTOP | 0x880,93,104,152,14
-    LTEXT           "(optional)Write output to file:",IDC_OUTEXT,1,107,91,8
-    PUSHBUTTON      "Restart as admin",IDC_ADMIN,159,72,83,14
+    CONTROL         "Keep backup files(-k):",IDC_BACKUP,"Button",BS_AUTOCHECKBOX | BS_LEFTTEXT | WS_TABSTOP,59,89,87,10
+    CONTROL         "",IDC_FILEOUT,"MfcEditBrowse",WS_BORDER | WS_TABSTOP | 0x80,103,131,152,14
+    LTEXT           "(optional)Write output to file:",IDC_OUTEXT,5,133,91,8
+    PUSHBUTTON      "Restart as admin",IDC_ADMIN,11,169,83,14
     CONTROL         "See log after action",IDC_LOG,"Button",BS_AUTOCHECKBOX | BS_LEFTTEXT | NOT WS_VISIBLE | WS_TABSTOP,163,86,79,10
+    CONTROL         "Enable write output to file",IDC_ENOUT,"Button",BS_AUTOCHECKBOX | BS_LEFTTEXT | WS_TABSTOP,49,102,97,10
 END
 
 
@@ -228,7 +231,7 @@ BEGIN
     0
 END
 
-#endif    // Angliƒçtina (Spojen√© st√°ty) resources
+#endif    // AngliËtina (SpojenÈ st·ty) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -251,5 +254,4 @@ LANGUAGE 9, 1
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
-
 
